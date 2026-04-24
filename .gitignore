@@ -1,0 +1,9 @@
+build/
+*.o
+*.out
+*.exe
+*.log
+*.csv
+results/raw/*
+results/plots/*
+.env
