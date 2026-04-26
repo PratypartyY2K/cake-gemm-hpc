@@ -124,7 +124,24 @@ int main(int argc, char **argv)
 
     cublasHandle_t handle;
     CHECK_CUBLAS(cublasCreate(&handle));
+    CHECK_CUBLAS(cublasSgemm(
+        handle,
+        CUBLAS_OP_N,
+        CUBLAS_OP_N,
+        n,
+        n,
+        n,
+        &alpha,
+        d_B,
+        n,
+        d_A,
+        n,
+        &beta,
+        d_C,
+        n));
 
+    CHECK_CUDA(cudaDeviceSynchronize());
+    CHECK_CUDA(cudaMemset(d_C, 0, bytes));
     float alpha = 1.0f;
     float beta = 0.0f;
 
