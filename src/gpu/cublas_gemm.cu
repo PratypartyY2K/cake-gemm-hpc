@@ -36,7 +36,7 @@
 
 std::vector<float> create_matrix(int n)
 {
-    return std::vector<float>(n * n, 0.0f);
+    return std::vector<float>(static_cast<size_t>(n) * n, 0.0f);
 }
 
 void fill_random(std::vector<float> &A)
@@ -84,7 +84,7 @@ float max_abs_diff(const std::vector<float> &A,
 
 double gflops(int n, float milliseconds)
 {
-    double ops = 2.0 * n * n * n;
+    double ops = 2.0 * static_cast<double>(n) * n * n;
     double seconds = milliseconds / 1000.0;
     return ops / seconds / 1e9;
 }
@@ -124,6 +124,11 @@ int main(int argc, char **argv)
 
     cublasHandle_t handle;
     CHECK_CUBLAS(cublasCreate(&handle));
+
+    float alpha = 1.0f;
+    float beta = 0.0f;
+
+    // Warm-up GEMM to mitigate startup overheads
     CHECK_CUBLAS(cublasSgemm(
         handle,
         CUBLAS_OP_N,
@@ -142,8 +147,6 @@ int main(int argc, char **argv)
 
     CHECK_CUDA(cudaDeviceSynchronize());
     CHECK_CUDA(cudaMemset(d_C, 0, bytes));
-    float alpha = 1.0f;
-    float beta = 0.0f;
 
     cudaEvent_t start, stop;
     CHECK_CUDA(cudaEventCreate(&start));
