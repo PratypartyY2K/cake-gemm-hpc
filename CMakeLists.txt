@@ -10,8 +10,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenMP REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 
-include_directories(include)
-
 add_executable(cake_gemm
     src/main.cpp
     src/cpu/naive_gemm.cpp
@@ -20,10 +18,12 @@ add_executable(cake_gemm
     src/utils/matrix.cpp
 )
 
+target_include_directories(cake_gemm PRIVATE include)
 target_link_libraries(cake_gemm PRIVATE OpenMP::OpenMP_CXX)
 
 add_executable(cake_gemm_gpu
     src/gpu/cublas_gemm.cu
 )
 
+target_include_directories(cake_gemm_gpu PRIVATE include)
 target_link_libraries(cake_gemm_gpu PRIVATE CUDA::cublas CUDA::cudart)
