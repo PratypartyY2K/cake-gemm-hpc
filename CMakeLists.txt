@@ -27,3 +27,10 @@ add_executable(cake_gemm_gpu
 
 target_include_directories(cake_gemm_gpu PRIVATE include)
 target_link_libraries(cake_gemm_gpu PRIVATE CUDA::cublas CUDA::cudart)
+
+add_executable(cake_gemm_tiled_gpu
+    src/gpu/tiled_gemm.cu
+)
+
+target_include_directories(cake_gemm_tiled_gpu PRIVATE include)
+target_link_libraries(cake_gemm_tiled_gpu PRIVATE CUDA::cublas CUDA::cudart)
