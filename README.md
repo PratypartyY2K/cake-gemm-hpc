@@ -197,6 +197,46 @@ Tiled 4096: ~12229 GFLOP/s
 
 ---
 
+## CPU OpenMP Results
+
+The CPU blocked GEMM implementation was evaluated using OpenMP. For `N=1024` and block size `64`, performance improved as the number of threads increased.
+
+| N    | Block Size | Threads | Time (s) | GFLOP/s |
+| ---- | ---------: | ------: | -------: | ------: |
+| 1024 |         64 |       1 |    5.517 |   0.389 |
+| 1024 |         64 |       2 |    2.859 |   0.751 |
+| 1024 |         64 |       4 |    1.430 |   1.501 |
+| 1024 |         64 |       8 |    0.721 |   2.979 |
+| 1024 |         64 |      16 |    0.649 |   3.311 |
+
+The CPU implementation scales well up to 8 threads, then begins to saturate. This is expected because blocked GEMM becomes increasingly limited by memory hierarchy behavior and cache reuse.
+
+### CPU Tile Sensitivity
+
+For `N=2048` with 8 OpenMP threads:
+
+| N    | Block Size | Threads | Time (s) | GFLOP/s |
+| ---- | ---------: | ------: | -------: | ------: |
+| 2048 |         16 |       8 |    5.858 |   2.933 |
+| 2048 |         32 |       8 |    5.922 |   2.901 |
+| 2048 |         64 |       8 |    5.875 |   2.924 |
+| 2048 |        128 |       8 |    7.284 |   2.359 |
+| 2048 |        256 |       8 |    6.989 |   2.458 |
+
+Block sizes between `16` and `64` perform best. Larger blocks reduce cache locality and hurt CPU performance.
+
+## CPU Plots
+
+### OpenMP Scaling
+
+![CPU OpenMP Scaling](results/plots/cpu_openmp_scaling.png)
+
+### CPU Block Size Sensitivity
+
+![CPU Block Size Sensitivity](results/plots/cpu_block_size_sensitivity.png)
+
+---
+
 ## Conclusion
 
 This project demonstrates the core tradeoff in communication-avoiding algorithms:
