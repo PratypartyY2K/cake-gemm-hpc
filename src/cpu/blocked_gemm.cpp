@@ -26,6 +26,7 @@ void blocked_gemm(const std::vector<float> &A,
                     {
                         float a = A[i * n + k];
 
+#pragma omp simd
                         for (int j = jj; j < j_max; j++)
                         {
                             C[i * n + j] += a * B[k * n + j];
