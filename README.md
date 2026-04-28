@@ -250,8 +250,10 @@ The CAKE-style tiled implementation effectively illustrates how scheduling and l
 
 ## Future Work
 
-- CUDA streams (overlap execution)
-- double buffering
-- asynchronous tile execution
-- MPI-based distributed GEMM
-- roofline performance analysis
+- Add CUDA streams to overlap independent tiled GEMM operations
+- Implement double buffering to overlap data movement and computation
+- Explore asynchronous tile scheduling for better GPU utilization
+- Extend the implementation to distributed-memory GEMM using MPI
+- Add roofline analysis to quantify compute-bound vs memory-bound behavior
+- Compare CAKE-style tiling against other communication-avoiding GEMM strategies
+- Evaluate performance on larger multi-GPU or multi-node systems
