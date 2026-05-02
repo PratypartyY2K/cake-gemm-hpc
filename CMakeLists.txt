@@ -34,3 +34,9 @@ add_executable(cake_gemm_tiled_gpu
 
 target_include_directories(cake_gemm_tiled_gpu PRIVATE include)
 target_link_libraries(cake_gemm_tiled_gpu PRIVATE CUDA::cublas CUDA::cudart)
+
+add_executable(bandwidth_test
+    src/analysis/bandwidth.cu
+)
+
+target_link_libraries(bandwidth_test PRIVATE CUDA::cudart)
