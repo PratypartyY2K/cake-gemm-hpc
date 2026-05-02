@@ -4,14 +4,14 @@
 
 This project explores communication-avoiding matrix multiplication using a CAKE-inspired tiled GEMM approach with GPU acceleration.
 
-The objective is to study how tiling and scheduling strategies affect performance, particularly in terms of:
+The objective is to study how **tiling and scheduling strategies affect performance**, particularly in terms of:
 
 - data locality
 - GPU utilization
 - kernel launch overhead
 - arithmetic intensity
 
-We compare a CAKE-style tiled approach against a highly optimized cuBLAS baseline.
+A CAKE-style tiled approach is compared against a highly optimized **cuBLAS baseline**, along with CPU OpenMP baselines.
 
 ---
 
@@ -24,13 +24,14 @@ Matrix multiplication is a fundamental building block in:
 - deep learning
 - high-performance computing (HPC)
 
-Modern GPUs provide massive compute capability, but performance is often limited by:
+Modern hardware performance is often limited not just by compute, but by:
 
 - memory bandwidth
 - data movement
-- kernel scheduling overhead
+- cache efficiency
+- scheduling overhead
 
-This project investigates how communication-avoiding ideas (CAKE-style tiling) influence performance on GPU architectures.
+This project investigates how **communication-avoiding ideas (CAKE-style tiling)** influence performance across CPU and GPU architectures.
 
 ---
 
@@ -38,11 +39,12 @@ This project investigates how communication-avoiding ideas (CAKE-style tiling) i
 
 Experiments were conducted on:
 
-- GPU: NVIDIA RTX A4500
-- CUDA: 12.4
-- Compiler: GCC 11.3
-- Build system: CMake
-- Library: cuBLAS
+- **GPU:** NVIDIA RTX A4500
+- **CUDA:** 12.4
+- **CPU:** Multi-core x86 system
+- **Compiler:** GCC 11.3
+- **Build system:** CMake
+- **Libraries:** cuBLAS, OpenMP
 
 ---
 
@@ -50,18 +52,25 @@ Experiments were conducted on:
 
 ### 1. CPU Naive GEMM
 
-Basic triple-loop implementation.
+Basic triple-loop implementation:
+
+```
+
+O(N³) computation without optimization
+
+```
 
 Used only for correctness and baseline comparison.
 
 ---
 
-### 2. CPU Blocked GEMM
+### 2. CPU OpenMP Blocked GEMM
 
 Cache-aware implementation using:
 
 - blocking (tiling)
 - OpenMP parallelism
+- SIMD vectorization
 
 Improves memory locality and CPU utilization.
 
@@ -69,9 +78,13 @@ Improves memory locality and CPU utilization.
 
 ### 3. Full GPU cuBLAS GEMM
 
-Uses cublasSgemm().
+Uses:
 
-This is the performance baseline, representing highly optimized vendor implementation.
+```cpp
+cublasSgemm()
+```
+
+This serves as the **performance baseline**, representing highly optimized vendor implementation.
 
 ---
 
@@ -81,10 +94,12 @@ A tiled GEMM approach inspired by communication-avoiding principles.
 
 Structure:
 
+```
 for each C tile:
-keep C tile active
-for each K tile:
-C_tile += A_tile × B_tile
+    keep C tile active
+    for each K tile:
+        C_tile += A_tile × B_tile
+```
 
 Key idea:
 
@@ -98,33 +113,41 @@ Each tile multiplication is performed using cuBLAS.
 
 ## Repository Structure
 
+```
 cake-gemm/
 ├── CMakeLists.txt
 ├── README.md
 ├── include/
-│ ├── matrix.h
-│ └── timer.h
+│   ├── matrix.h
+│   └── timer.h
 ├── src/
-│ ├── main.cpp
-│ ├── cpu/
-│ │ ├── naive_gemm.cpp
-│ │ └── blocked_gemm.cpp
-│ ├── gpu/
-│ │ ├── cublas_gemm.cu
-│ │ └── tiled_gemm.cu
-│ └── utils/
-│ ├── matrix.cpp
-│ └── timer.cpp
+│   ├── main.cpp
+│   ├── cpu/
+│   │   ├── naive_gemm.cpp
+│   │   └── blocked_gemm.cpp
+│   ├── gpu/
+│   │   ├── cublas_gemm.cu
+│   │   └── tiled_gemm.cu
+│   ├── utils/
+│   │   ├── matrix.cpp
+│   │   └── timer.cpp
+│   └── analysis/
+│       └── bandwidth.cu
 ├── scripts/
-│ └── plot_results.py
+│   ├── plot_results.py
+│   ├── plot_cpu_results.py
+│   └── plot_roofline.py
 └── results/
-├── summary.csv
-└── plots/
+    ├── summary.csv
+    ├── cpu_summary.csv
+    └── plots/
+```
 
 ---
 
 ## Build Instructions
 
+```bash
 export CUDA_HOME=/usr/local/cuda
 export PATH=$CUDA_HOME/bin:/home/software/gcc/gcc-11.3.0/bin:$PATH
 export LD_LIBRARY_PATH=/home/software/gcc/gcc-11.3.0/lib64:$CUDA_HOME/lib64:$LD_LIBRARY_PATH
@@ -134,28 +157,38 @@ rm -rf build
 mkdir build
 cd build
 
-cmake ..
--DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
--DCMAKE_CUDA_ARCHITECTURES=86
+cmake .. \
+  -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+  -DCMAKE_CUDA_ARCHITECTURES=86
 
 make -j
+```
 
 ---
 
 ## Run Instructions
 
-CPU:
+### CPU
 
+```bash
 ./cake_gemm 1024 64
+```
 
-GPU (cuBLAS baseline):
+---
 
+### GPU (cuBLAS baseline)
+
+```bash
 ./cake_gemm_gpu 4096
 ./cake_gemm_gpu 8192
 ./cake_gemm_gpu 16384
+```
 
-CAKE-style tiled GPU:
+---
 
+### CAKE-style tiled GPU
+
+```bash
 ./cake_gemm_tiled_gpu 4096 512
 ./cake_gemm_tiled_gpu 4096 1024
 ./cake_gemm_tiled_gpu 4096 2048
@@ -163,77 +196,136 @@ CAKE-style tiled GPU:
 ./cake_gemm_tiled_gpu 8192 1024
 ./cake_gemm_tiled_gpu 8192 2048
 ./cake_gemm_tiled_gpu 8192 4096
-
----
-
-## Results Summary
-
-N = 4096
-Full cuBLAS: ~15016 GFLOP/s
-Tiled 1024: ~13103 GFLOP/s
-Tiled 2048: ~13344 GFLOP/s
-
-N = 8192
-Full cuBLAS: ~15427 GFLOP/s
-Tiled 1024: ~11364 GFLOP/s
-Tiled 2048: ~12074 GFLOP/s
-Tiled 4096: ~12562 GFLOP/s
-
-N = 16384
-Full cuBLAS: ~15106 GFLOP/s
-Tiled 1024: ~11109 GFLOP/s
-Tiled 2048: ~11764 GFLOP/s
-Tiled 4096: ~12229 GFLOP/s
-
----
-
-## Key Observations
-
-- Full cuBLAS achieves peak performance (~15 TFLOP/s).
-- Tiled GEMM improves as tile size increases.
-- Small tiles suffer from overhead (many cuBLAS calls).
-- Large tiles improve arithmetic intensity and GPU utilization.
-- Tiled approach approaches but does not surpass full cuBLAS.
+```
 
 ---
 
 ## CPU OpenMP Results
 
-The CPU blocked GEMM implementation was evaluated using OpenMP. For `N=1024` and block size `64`, performance improved as the number of threads increased.
+### OpenMP Scaling (N=1024, block=64)
 
-| N    | Block Size | Threads | Time (s) | GFLOP/s |
-| ---- | ---------: | ------: | -------: | ------: |
-| 1024 |         64 |       1 |    5.517 |   0.389 |
-| 1024 |         64 |       2 |    2.859 |   0.751 |
-| 1024 |         64 |       4 |    1.430 |   1.501 |
-| 1024 |         64 |       8 |    0.721 |   2.979 |
-| 1024 |         64 |      16 |    0.649 |   3.311 |
+| Threads | GFLOP/s |
+| ------- | ------- |
+| 1       | 0.39    |
+| 2       | 0.75    |
+| 4       | 1.50    |
+| 8       | 2.98    |
+| 16      | 3.31    |
 
-The CPU implementation scales well up to 8 threads, then begins to saturate. This is expected because blocked GEMM becomes increasingly limited by memory hierarchy behavior and cache reuse.
+Scaling is good up to 8 threads, after which performance saturates due to memory and cache limitations.
 
-### CPU Tile Sensitivity
+---
 
-For `N=2048` with 8 OpenMP threads:
+### CPU Block Size Sensitivity (N=2048, threads=8)
 
-| N    | Block Size | Threads | Time (s) | GFLOP/s |
-| ---- | ---------: | ------: | -------: | ------: |
-| 2048 |         16 |       8 |    5.858 |   2.933 |
-| 2048 |         32 |       8 |    5.922 |   2.901 |
-| 2048 |         64 |       8 |    5.875 |   2.924 |
-| 2048 |        128 |       8 |    7.284 |   2.359 |
-| 2048 |        256 |       8 |    6.989 |   2.458 |
+| Block Size | GFLOP/s |
+| ---------- | ------- |
+| 16         | 2.93    |
+| 32         | 2.90    |
+| 64         | 2.92    |
+| 128        | 2.36    |
+| 256        | 2.46    |
 
-Block sizes between `16` and `64` perform best. Larger blocks reduce cache locality and hurt CPU performance.
+Best performance occurs for block sizes between **16–64**, which maximize cache locality.
 
-## CPU Plots
+---
 
-### OpenMP Scaling
+### CPU Plots
+
+#### OpenMP Scaling
 
 ![CPU OpenMP Scaling](results/plots/cpu_openmp_scaling.png)
 
-### CPU Block Size Sensitivity
+#### Block Size Sensitivity
 
 ![CPU Block Size Sensitivity](results/plots/cpu_block_size_sensitivity.png)
+
+---
+
+## GPU Results Summary
+
+Full cuBLAS achieves ~15 TFLOP/s peak performance.
+
+CAKE-style tiled GEMM improves with tile size:
+
+| N     | Tile | GFLOP/s |
+| ----- | ---- | ------- |
+| 4096  | 1024 | ~13103  |
+| 4096  | 2048 | ~13344  |
+| 8192  | 2048 | ~12074  |
+| 8192  | 4096 | ~12562  |
+| 16384 | 4096 | ~12229  |
+
+---
+
+### GPU Plots
+
+#### Full vs Tiled
+
+![GPU Comparison](results/plots/full_vs_best_tiled_gflops.png)
+
+#### Runtime Comparison
+
+![Runtime](results/plots/runtime_comparison.png)
+
+---
+
+## Roofline Analysis
+
+Measured GPU memory bandwidth:
+
+```
+≈ 285 GB/s
+```
+
+Peak compute:
+
+```
+≈ 15000 GFLOP/s
+```
+
+Ridge point:
+
+```
+≈ 52 FLOPs/byte
+```
+
+GEMM operational intensity:
+
+```
+I ≈ N / 6
+```
+
+This places GEMM firmly in the **compute-bound region**.
+
+---
+
+### Roofline Plot
+
+![Roofline](results/plots/roofline.png)
+
+---
+
+## Key Insights
+
+- GEMM is **compute-bound on GPU**, not memory-bound.
+- cuBLAS reaches near-peak performance (~15 TFLOP/s).
+- CAKE-style tiling improves performance as tile size increases.
+- Smaller tiles introduce overhead and reduce efficiency.
+- CPU performance is limited by memory hierarchy and cache behavior.
+
+---
+
+## CPU vs GPU Comparison
+
+The CPU implementation lies closer to the memory-bound region due to limited cache bandwidth and lower compute throughput (~3.3 GFLOP/s).
+
+In contrast, the GPU operates in the compute-bound region, achieving ~15 TFLOP/s.
+
+This highlights the architectural difference:
+
+- CPUs → memory-bound behavior
+- GPUs → compute-bound efficiency
 
 ---
 
@@ -242,18 +334,24 @@ Block sizes between `16` and `64` perform best. Larger blocks reduce cache local
 This project demonstrates the core tradeoff in communication-avoiding algorithms:
 
 - smaller tiles → more flexibility but higher overhead
-- larger tiles → better performance but reduced flexibility
+- larger tiles → better performance but reduced scheduling flexibility
 
-The CAKE-style tiled implementation effectively illustrates how scheduling and locality influence performance on GPUs.
+CAKE-style tiling successfully exposes locality and scheduling tradeoffs, while cuBLAS remains the optimal implementation due to global optimization.
 
 ---
 
 ## Future Work
 
 - Add CUDA streams to overlap independent tiled GEMM operations
-- Implement double buffering to overlap data movement and computation
-- Explore asynchronous tile scheduling for better GPU utilization
-- Extend the implementation to distributed-memory GEMM using MPI
-- Add roofline analysis to quantify compute-bound vs memory-bound behavior
-- Compare CAKE-style tiling against other communication-avoiding GEMM strategies
-- Evaluate performance on larger multi-GPU or multi-node systems
+- Implement double buffering for compute–memory overlap
+- Explore asynchronous tile scheduling
+- Extend to distributed-memory GEMM using MPI
+- Perform detailed roofline-based performance modeling
+- Evaluate multi-GPU and multi-node scalability
+
+---
+
+## Author
+
+Pratyush Kumar
+MS Computer Science, Penn State
