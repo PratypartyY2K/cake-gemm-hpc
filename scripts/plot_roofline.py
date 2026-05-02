@@ -1,9 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Replace with your values
 peak_flops = 15000  # GFLOP/s
-bandwidth = 600     # GB/s
+bandwidth = 285     # GB/s
 
 intensity = np.logspace(-1, 4, 100)
 
@@ -12,7 +11,6 @@ roofline = np.minimum(peak_flops, bandwidth * intensity)
 plt.figure()
 plt.loglog(intensity, roofline, label="Roofline")
 
-# Add your GEMM points
 Ns = [1024, 4096, 8192, 16384]
 gflops = [12000, 15000, 15400, 15100]
 
