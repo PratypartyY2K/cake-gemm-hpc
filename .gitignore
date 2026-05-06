@@ -4,3 +4,5 @@ build/
 *.exe
 *.log
 .venv/
+*.sh
+*.zip
